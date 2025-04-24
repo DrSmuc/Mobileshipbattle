@@ -7,9 +7,9 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.example.mobileshipbattle.databinding.ActivityHomeBinding
-import com.google.firebase.firestore.FirebaseFirestore
+import com.example.mobileshipbattle.databinding.ActivityMainBinding
 
-public class MainActivity : AppCompatActivity() {
+class HomeActivity : AppCompatActivity() {
 
     lateinit var binding: ActivityHomeBinding
 
@@ -30,10 +30,10 @@ public class MainActivity : AppCompatActivity() {
             )
         )
 
-        startGame()
+        StartGame()
     }
 
-    fun startGame() {
+    fun StartGame() {
         startActivity((Intent(this,GameActivity::class.java)))
     }
 }
