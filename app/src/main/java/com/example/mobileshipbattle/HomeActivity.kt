@@ -24,7 +24,7 @@ class HomeActivity : AppCompatActivity() {
     }
 
     fun  CreateOfflineGame() {
-        GameData.SaveGameModel(
+        GameData.saveGameModel(
             GameModel(
                 gameStatus = GameStatus.JOINED
             )

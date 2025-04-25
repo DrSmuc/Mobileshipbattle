@@ -3,16 +3,13 @@ package com.example.mobileshipbattle
 import android.graphics.Color
 import android.os.Bundle
 import android.util.TypedValue
-import android.view.Gravity
 import android.view.View
-import android.view.ViewGroup
 import android.widget.Button
 import android.widget.FrameLayout
 import android.widget.GridLayout
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.example.mobileshipbattle.databinding.ActivityGameBinding
-import kotlin.reflect.KMutableProperty0
 
 class GameActivity : AppCompatActivity(), View.OnClickListener {
 
@@ -74,6 +71,23 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
     private var endgame: Int = 0
 
 
+    //----------------------------------- setup -------------------------------------------
+
+    val ROWS = 10
+    val COLUMNS = 10
+
+    private var placingShip = false
+    private var shipLength = 0
+    private var numberOfShipsPlaced = 0
+    private var shipsOfLength2Placed = 0
+    private var shipsOfLength3Placed = 0
+    private var shipsOfLength4Placed = 0
+
+    private var b6 = false
+    private var b7 = false
+
+    private var ready = false
+
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -89,8 +103,10 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
 
         GameData.gameModel.observe(this) {
             gameModel = it
-            SetUI()
+            setUI()
         }
+
+        opennedSetup()
     }
 
     fun CreateGrid() {
@@ -166,16 +182,41 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
         }
     }
 
+    fun showHostGrid() {
+        val gridSize = 10
+        for (row in 0 until gridSize) {
+            for (col in 0 until gridSize) {
+                val index = row * gridSize + col
+                val value = p_board?.get(row)?.get(col) ?: 0
+                val button = gridButtons[index]
+                if (value == 0) {
+                    button.setBackgroundColor(android.graphics.Color.parseColor("#FFFFFF"))
+                } else {
+                    button.setBackgroundColor(android.graphics.Color.RED)
+                }
+            }
+        }
+    }
 
+    fun opennedSetup() {
+        numberOfShipsPlaced = 0
+        shipsOfLength2Placed = 0
+        shipsOfLength3Placed = 0
+        shipsOfLength4Placed = 0
+        b6 = false
+        b7 = false
+        ready = false
+        placingShip = false
 
-    private fun openned() {
-        Toast.makeText(applicationContext, "openned call", Toast.LENGTH_SHORT).show()
+        p_board = Array(ROWS) { IntArray(COLUMNS) { 0 } }
+    }
+
+    fun opennedGame() {
         start()
         botBoardSetup()
         // InitializeGrid_p()
         // InitializeGrid_r()
         hideEnd()
-        showGuestGrid()
 
         // missSound.setDataSource(context, Uri.parse("android.resource://${context.packageName}/raw/water_splash"))
         // hitSound.setDataSource(context, Uri.parse("android.resource://${context.packageName}/raw/short_explosion"))
@@ -232,22 +273,6 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
         val size = 10
         r_board = Array(size) { IntArray(size) { 0 } }
 
-        fun isSurroundingEmpty(x: Int, y: Int): Boolean {
-            for (dx in -1..1) {
-                for (dy in -1..1) {
-                    if (dx == 0 && dy == 0) continue  // Skip current cell
-                    val nx = x + dx
-                    val ny = y + dy
-                    if (nx in 0 until size && ny in 0 until size) {
-                        if (r_board!![nx][ny] != 0) {
-                            return false
-                        }
-                    }
-                }
-            }
-            return true
-        }
-
         var i = 0
         while (i < 5) {
             val r = (2..4).random()
@@ -256,7 +281,7 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
             fun checkVertical(x: Int, y: Int, length: Int): Boolean {
                 // Check ship cells and their surroundings
                 for (i in 0 until length) {
-                    if (r_board!![x + i][y] != 0 || !isSurroundingEmpty(x + i, y)) {
+                    if (r_board!![x + i][y] != 0 || !isSurroundingEmpty(r_board!!, x + i, y)) {
                         return false
                     }
                 }
@@ -266,7 +291,7 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
             fun checkHorizontal(x: Int, y: Int, length: Int): Boolean {
                 // Check ship cells and their surroundings
                 for (i in 0 until length) {
-                    if (r_board!![x][y + i] != 0 || !isSurroundingEmpty(x, y + i)) {
+                    if (r_board!![x][y + i] != 0 || !isSurroundingEmpty(r_board!!, x, y + i)) {
                         return false
                     }
                 }
@@ -352,32 +377,41 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
 
 
 
-    fun SetUI() {
+    fun setUI(){
         gameModel?.apply {
 
+            binding.startGameBtn.visibility = View.VISIBLE
+
+            binding.gameStatusTxt.text =
+                when(gameStatus){
+                    GameStatus.CREATED -> {
+                        binding.startGameBtn.visibility = View.INVISIBLE
+                        "Game ID :"+ gameId
+                    }
+                    GameStatus.JOINED ->{
+                        "Click on start game"
+                    }
+                    GameStatus.INPROGRESS ->{
+                        binding.startGameBtn.visibility = View.INVISIBLE
+                        when(GameData.myID){
+                            currPlayer -> "Your turn"
+                            else ->  currPlayer + " turn"
+                        }
+
+                    }
+                    GameStatus.FINISHED ->{
+                        if(winner.isNotEmpty()) {
+                            when(GameData.myID){
+                                winner -> "You won"
+                                else ->   winner + " Won"
+                            }
+
+                        }
+                        else "DRAW"
+                    }
+                }
+
         }
-
-        binding.gameStatusTxt.text =
-            when(gameModel?.gameStatus) {
-                GameStatus.CREATED -> {
-                    "Game ID: " + gameModel!!.gameId
-                }
-
-                GameStatus.JOINED -> {
-                    "Click on start game"
-                }
-
-                GameStatus.INPROGRESS -> {
-                    gameModel!!.currPlayer + "turn"
-                }
-
-                GameStatus.FINISHED -> {
-                    if (gameModel!!.winner.isNotEmpty()) gameModel!!.winner + " Won"
-                    else "Draw"
-                }
-
-                null -> TODO()
-            }
     }
 
 
@@ -390,11 +424,11 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
                 )
             )
         }
-        openned()
+        opennedGame()
     }
 
     fun UpdateGameData(model: GameModel) {
-        GameData.SaveGameModel(model)
+        GameData.saveGameModel(model)
     }
 
     fun checkForWinner(){
@@ -407,8 +441,162 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
             UpdateGameData(this)
 
         }
+    }
 
 
+    fun selectedShipPos(row: Int, column: Int) {
+
+        // Only allow ship placement if the game is in setup phase
+        if (!ready && !placingShip) {
+            if (numberOfShipsPlaced < 5) {
+                placingShip = true
+
+                // Show dialog to pick ship length (2, 3, or 4)
+                val options = arrayOf("2", "3", "4")
+                val builder = android.app.AlertDialog.Builder(this)
+                builder.setTitle("Odaberi dužinu broda")
+                builder.setItems(options) { dialog, which ->
+                    shipLength = options[which].toInt()
+
+                    // Check ship count limits
+                    if (shipLength == 3 && shipsOfLength3Placed >= 2) {
+                        Toast.makeText(this, "Već si postavio maksimalan broj brodova duljine 3 bloka!", Toast.LENGTH_SHORT).show()
+                        placingShip = false
+                        return@setItems
+                    }
+                    if (shipLength == 4 && shipsOfLength4Placed >= 1) {
+                        Toast.makeText(this, "Već si postavio maksimalan broj brodova duljine 4 bloka!", Toast.LENGTH_SHORT).show()
+                        placingShip = false
+                        return@setItems
+                    }
+                    if (shipLength == 2 && shipsOfLength2Placed >= 2) {
+                        Toast.makeText(this, "Već si postavio maksimalan broj brodova duljine 2 bloka!", Toast.LENGTH_SHORT).show()
+                        placingShip = false
+                        return@setItems
+                    }
+
+                    // Increment counters
+                    when (shipLength) {
+                        2 -> shipsOfLength2Placed++
+                        3 -> shipsOfLength3Placed++
+                        4 -> shipsOfLength4Placed++
+                    }
+                    numberOfShipsPlaced++
+
+                    // Ask for orientation
+                    val orientationOptions = arrayOf("Horizontalno", "Vertikalno")
+                    val orientationDialog = android.app.AlertDialog.Builder(this)
+                    orientationDialog.setTitle("Odaberi smjer broda")
+                    orientationDialog.setItems(orientationOptions) { _, orientationWhich ->
+                        val isHorizontal = (orientationWhich == 0)
+                        if (checkIfShipFits(row, column, isHorizontal)) {
+                            placeShip(row, column, isHorizontal)
+                            placingShip = false
+                            if (numberOfShipsPlaced == 5) {
+                                ready_f()
+                            }
+                        } else {
+                            Toast.makeText(this, "Nemoguće postaviti brod! Izvan granica ili mjesto je već zauzeto.", Toast.LENGTH_SHORT).show()
+                            placingShip = false
+                            numberOfShipsPlaced--
+                            when (shipLength) {
+                                2 -> shipsOfLength2Placed--
+                                3 -> shipsOfLength3Placed--
+                                4 -> shipsOfLength4Placed--
+                            }
+                        }
+                    }
+                    orientationDialog.show()
+                }
+                builder.show()
+            } else {
+                Toast.makeText(this, "Nemoguće postaviti više brodova!", Toast.LENGTH_SHORT).show()
+            }
+            return
+        }
+    }
+
+
+    private fun checkIfShipFits(row: Int, column: Int, horizontal: Boolean): Boolean {
+        val requiredLength = shipLength
+        val board = p_board ?: return false
+
+        // Check boundaries and cell availability
+        if (horizontal) {
+            if (column + requiredLength > COLUMNS) return false
+            for (i in column until column + requiredLength) {
+                if (board[row][i] != 0 || !isSurroundingEmpty(board, row, i)) {
+                    return false
+                }
+            }
+        } else {
+            if (row + requiredLength > ROWS) return false
+            for (i in row until row + requiredLength) {
+                if (board[i][column] != 0 || !isSurroundingEmpty(board, i, column)) {
+                    return false
+                }
+            }
+        }
+        return true
+    }
+
+    private fun isSurroundingEmpty(board: Array<IntArray>, x: Int, y: Int): Boolean {
+        for (dx in -1..1) {
+            for (dy in -1..1) {
+                if (dx == 0 && dy == 0) continue  // Skip current cell
+                val nx = x + dx
+                val ny = y + dy
+                if (nx in 0 until ROWS && ny in 0 until COLUMNS) {
+                    if (board[nx][ny] != 0) {
+                        return false
+                    }
+                }
+            }
+        }
+        return true
+    }
+
+
+
+    private fun placeShip(row: Int, column: Int, horizontal: Boolean) {
+        val requiredLength = shipLength
+        var putLength = shipLength
+        if (shipLength == 2 && !b6) {
+            b6 = true
+        } else if (shipLength == 2 && b6) {
+            putLength = 6
+            b6 = false
+        } else if (shipLength == 3 && !b7) {
+            b7 = true
+        } else if (shipLength == 3 && b7) {
+            putLength = 7
+            b7 = false
+        }
+
+        val board = p_board ?: return
+
+        if (horizontal) {
+            for (i in column until column + requiredLength) {
+                board[row][i] = putLength
+                val idx = row * 10 + i
+                gridButtons[idx].setBackgroundColor(Color.RED)
+            }
+        } else {
+            for (i in row until row + requiredLength) {
+                board[i][column] = putLength
+                val idx = i * 10 + column
+                gridButtons[idx].setBackgroundColor(Color.RED)
+            }
+        }
+    }
+
+
+    private fun ready_f() {
+        // You can set UI elements to visible/enabled here as needed
+        ready = true
+        // For example:
+        // binding.continueButton.visibility = View.VISIBLE
+        // binding.savePresetButton.visibility = View.VISIBLE
     }
 
 
@@ -422,15 +610,21 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
         }
     }
 
-
     override fun onClick(v: View?) {
         gameModel?.apply {
             val clickPos = (v?.tag as String).toInt()
 
-            showGuestGrid()
+            if (gameStatus == GameStatus.JOINED) {
+                val row = clickPos / 10
+                val column = clickPos % 10
+
+                Toast.makeText(applicationContext, "" + row + " " + column, Toast.LENGTH_SHORT).show()
+
+                selectedShipPos(row, column)
+            }
 
             if (gameStatus != GameStatus.INPROGRESS) {
-                Toast.makeText(applicationContext, "Game not started " + clickPos, Toast.LENGTH_SHORT).show()
+                // Toast.makeText(applicationContext, "Game not started " + clickPos, Toast.LENGTH_SHORT).show()
                 return
             }
 
