@@ -1,75 +1,118 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main_menu_layout"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:gravity="center"
-    android:layout_margin="16dp"
-    android:orientation="vertical"
-    tools:context=".MainActivity">
+    android:layout_height="match_parent">
 
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/app_name"
-        android:textStyle="bold"
-        android:textSize="28sp"
-        android:layout_margin="8dp"
-        android:padding="8dp"/>
-
-    <Button
+    <!-- background -->
+    <ImageView
+        android:id="@+id/background_gif"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:id="@+id/play_offline_btn"
-        android:text="Play Offline"
-        android:layout_margin="8dp"
-        android:padding="8dp"/>
+        android:layout_height="match_parent"
+        android:src="@drawable/water"
+        android:scaleType="centerCrop"/>
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Or"
-        android:textStyle="bold"
-        android:textSize="20sp"
-        android:layout_margin="8dp"
-        android:padding="8dp"/>
 
-    <Button
+    <!--dim effect -->
+    <View
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:id="@+id/create_online_game_btn"
-        android:text="Create Game Online"
-        android:layout_margin="8dp"
-        android:padding="8dp"/>
+        android:layout_height="match_parent"
+        android:background="#88000000" />
 
+    <!-- title -->
     <TextView
+        android:id="@+id/title"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Or"
+        android:text="𝑩𝑨𝑻𝑻𝑳𝑬𝑺𝑯𝑰𝑷"
+        android:textColor="#FFFFFF"
+        android:textSize="36sp"
         android:textStyle="bold"
-        android:textSize="20sp"
-        android:layout_margin="8dp"
-        android:padding="8dp"/>
+        android:fontFamily="sans-serif-condensed"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="80dp" />
 
-    <EditText
-        android:layout_width="wrap_content"
+    <!-- Toolbar -->
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/toolbar"
+        android:layout_width="0dp"
+        android:layout_height="?attr/actionBarSize"
+        android:background="#990066CC"
+        app:menu="@menu/main_menu"
+        app:popupTheme="@style/ThemeOverlay.AppCompat.Light"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+
+    <!-- container -->
+    <androidx.cardview.widget.CardView
+        android:id="@+id/menu_container"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:id="@+id/game_id_input"
-        android:textSize="24sp"
-        android:textStyle="bold"
-        android:inputType="number"
-        android:layout_margin="8dp"
-        android:padding="8dp"
-        android:hint="Enter game Id"/>
+        android:layout_marginStart="32dp"
+        android:layout_marginEnd="32dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginBottom="32dp"
+        android:background="@android:color/transparent"
+        app:cardElevation="0dp"
+        app:cardBackgroundColor="@android:color/transparent"
+        app:cardCornerRadius="24dp"
+        app:layout_constraintTop_toBottomOf="@id/title"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
 
-    <Button
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:id="@+id/join_online_game_btn"
-        android:text="Join Game Online"
-        android:layout_margin="8dp"
-        android:padding="8dp"/>
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="#22FFFFFF"
+            android:orientation="vertical"
+            android:padding="24dp">
 
-</LinearLayout>
+            <Button
+                android:id="@+id/start_button"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="𝑺𝒕𝒂𝒓𝒕 𝑮𝒂𝒎𝒆"
+                android:textSize="18sp"
+                android:backgroundTint="#990066CC"
+                android:textColor="#FFFFFF" />
+
+            <Button
+                android:id="@+id/how_to_play_button"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="𝑯𝒐𝒘 𝒕𝒐 𝑷𝒍𝒂𝒚"
+                android:textSize="18sp"
+                android:backgroundTint="#990066CC"
+                android:textColor="#FFFFFF" />
+
+            <Button
+                android:id="@+id/settings_button"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="𝑺𝒆𝒕𝒕𝒊𝒏𝒈𝒔"
+                android:textSize="18sp"
+                android:backgroundTint="#990066CC"
+                android:textColor="#FFFFFF" />
+
+            <Button
+                android:id="@+id/exit_button"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="𝑬𝒙𝒊𝒕"
+                android:textSize="18sp"
+                android:backgroundTint="#990066CC"
+                android:textColor="#FFFFFF" />
+
+        </LinearLayout>
+    </androidx.cardview.widget.CardView>
+</androidx.constraintlayout.widget.ConstraintLayout>
