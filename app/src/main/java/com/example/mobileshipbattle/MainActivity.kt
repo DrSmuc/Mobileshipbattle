@@ -29,9 +29,9 @@ public class MainActivity : AppCompatActivity() {
 
 
         // game start
-        // findViewById<Button>(R.id.start_button).setOnClickListener {
-        //     startActivity(Intent(this, GameActivity::class.java))
-        // }
+        findViewById<Button>(R.id.start_button).setOnClickListener {
+             startActivity(Intent(this, HomeActivity::class.java))
+        }
 
         findViewById<Button>(R.id.how_to_play_button).setOnClickListener {
             startActivity(Intent(this, HowToPlayActivity::class.java))
