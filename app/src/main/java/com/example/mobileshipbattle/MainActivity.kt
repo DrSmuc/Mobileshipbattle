@@ -34,7 +34,7 @@ public class MainActivity : AppCompatActivity() {
         }
 
         findViewById<Button>(R.id.how_to_play_button).setOnClickListener {
-            startActivity(Intent(this, HowToPlayActivity::class.java))
+            startActivity(Intent(this, HowToPlayActivity2::class.java))
         }
 
         findViewById<Button>(R.id.settings_button).setOnClickListener {

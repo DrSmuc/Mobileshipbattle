@@ -49,7 +49,11 @@ dependencies {
     implementation(libs.androidx.activity)
     implementation(libs.androidx.constraintlayout)
     implementation(libs.firebase.firestore)
+    implementation(libs.volley)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
+    implementation("io.coil-kt:coil-gif:2.6.0")
+    implementation("com.google.accompanist:accompanist-drawablepainter:0.35.0-alpha")
+    implementation("com.github.bumptech.glide:glide:4.15.1")
 }
