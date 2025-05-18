@@ -41,7 +41,9 @@ data class GameModel (
         "0", "0", "0", "0", "0", "0", "0", "0", "0", "0"),
     var winner: String = "",
     var gameStatus: GameStatus = GameStatus.CREATED,
-    var currPlayer: String = "Host"
+    var currPlayer: String = "Host",
+    var hostReady: Boolean = false,
+    var guestReady: Boolean = false
 )
 
 

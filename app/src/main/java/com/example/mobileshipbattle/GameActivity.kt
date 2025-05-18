@@ -123,7 +123,20 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
         GameData.gameModel.observe(this) {
             gameModel = it
             setUI()
+
+            // Check if both players are ready and game should start
+            if (gameModel?.gameId != "-1" &&
+                gameModel?.gameStatus == GameStatus.JOINED &&
+                gameModel?.hostReady == true &&
+                gameModel?.guestReady == true) {
+
+                gameModel?.gameStatus = GameStatus.INPROGRESS
+                UpdateGameData(gameModel!!)
+                opennedGame()
+            }
         }
+
+        handleGameStateChange()
 
         opennedSetup()
     }
@@ -272,11 +285,9 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
 
         if (gameModel?.gameId == "-1") {
             GameData.myID = "Host"
-            // Initialize both boards for offline mode
             p_board = Array(ROWS) { IntArray(COLUMNS) { 0 } }
             r_board = Array(ROWS) { IntArray(COLUMNS) { 0 } }
         } else {
-            // For online mode, initialize based on player role
             if (GameData.myID == "Host") {
                 p_board = Array(ROWS) { IntArray(COLUMNS) { 0 } }
             } else {
@@ -291,24 +302,17 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
 
     fun opennedGame() {
         start()
-
         if (gameModel!!.gameId == "-1") {
-            // Offline game
+            // offline
             botBoardSetup()
             showGuestGrid()
             allowed = true
             gameModel!!.currPlayer = "Host"
             GameData.myID = "Host"
         } else {
-            if (GameData.myID == "Host") {
-                showGuestGrid()
-                allowed = gameModel!!.currPlayer == "Host"
-            } else {
-                showHostGridHidden()
-                allowed = gameModel!!.currPlayer == "Guest"
-            }
+            // online
+            updateUIForCurrentPlayer()
         }
-
         hideEnd()
     }
 
@@ -470,36 +474,23 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
                     "Game ID: " + gameId
                 }
                 GameStatus.JOINED -> {
-                    "Click on start game"
+                    if (GameData.myID == "Host") {
+                        if (hostReady) {
+                            "Waiting for Guest to start..."
+                        } else {
+                            "Place your ships and start game"
+                        }
+                    } else { // Guest
+                        if (guestReady) {
+                            "Waiting for Host to start..."
+                        } else {
+                            "Place your ships and start game"
+                        }
+                    }
                 }
                 GameStatus.INPROGRESS -> {
                     binding.startGameBtn.visibility = View.INVISIBLE
                     binding.resetSetupBtn.visibility = View.INVISIBLE
-
-                    // Update the board display based on the latest data
-                    if (gameId != "-1") {
-                        p_board = convertFieldPosTo2DArray(hostFieldPos)
-                        r_board = convertFieldPosTo2DArray(guestFieldPos)
-
-                        if (GameData.myID == "Host") {
-                            if (currPlayer == "Host") {
-                                showGuestGrid()
-                                allowed = true
-                            } else {
-                                showHostGrid()
-                                allowed = false
-                            }
-                        } else {
-                            // Guest player
-                            if (currPlayer == "Guest") {
-                                showHostGridHidden()
-                                allowed = true
-                            } else {
-                                showGuestGridVisible()
-                                allowed = false
-                            }
-                        }
-                    }
 
                     when(GameData.myID) {
                         currPlayer -> "Your turn"
@@ -535,7 +526,6 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
 
         gameModel?.apply {
             if (gameId == "-1") {
-                // Offline game
                 hostFieldPos = p_board!!.flatMap { it.toList() }.map { it.toString() }.toMutableList()
                 currPlayer = "Host"
                 UpdateGameData(
@@ -547,63 +537,49 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
                         guestFieldPos = guestFieldPos
                     )
                 )
-                opennedGame() // Call this to set up the AI's board for offline mode
+                opennedGame()
             } else {
-                // Online game logic remains the same
+                binding.startGameBtn.isEnabled = false
+                binding.startGameBtn.text = "Saving..."
+
                 if (GameData.myID == "Host") {
                     hostFieldPos = p_board!!.flatMap { it.toList() }.map { it.toString() }.toMutableList()
+                    Toast.makeText(this@GameActivity, "" + p_board!![0][0], Toast.LENGTH_SHORT).show()
                 } else {
                     guestFieldPos = r_board!!.flatMap { it.toList() }.map { it.toString() }.toMutableList()
                 }
 
-                if (checkOpponentReady()) {
-                    gameStatus = GameStatus.INPROGRESS
-                    Toast.makeText(this@GameActivity, "Game starting! Both players are ready.", Toast.LENGTH_SHORT).show()
-                    opennedGame() // Call this when both players are ready in online mode
-                } else {
-                    Toast.makeText(this@GameActivity, "Waiting for other player to start the game...", Toast.LENGTH_SHORT).show()
-                }
+                Toast.makeText(this@GameActivity, "" + hostFieldPos[0], Toast.LENGTH_SHORT).show()
 
-                binding.startGameBtn.visibility = View.INVISIBLE
-                binding.resetSetupBtn.visibility = View.INVISIBLE
                 UpdateGameData(this)
+
+                handler.postDelayed({
+                    if (GameData.myID == "Host") {
+                        hostReady = true
+                    } else {
+                        guestReady = true
+                    }
+
+                    UpdateGameData(this)
+                    binding.startGameBtn.text = "Waiting..."
+
+                    if (hostReady && guestReady && false) {
+                        gameStatus = GameStatus.INPROGRESS
+                        Toast.makeText(this@GameActivity, "Game starting! Both players are ready.", Toast.LENGTH_SHORT).show()
+                        UpdateGameData(this)
+                        opennedGame()
+                    } else {
+                        Toast.makeText(this@GameActivity, "Waiting for other player to start the game...", Toast.LENGTH_SHORT).show()
+                    }
+
+                    binding.startGameBtn.visibility = View.INVISIBLE
+                    binding.resetSetupBtn.visibility = View.INVISIBLE
+                }, 1000)
             }
         }
     }
-
-
-
-    private fun checkOpponentReady(): Boolean {
-        return if (GameData.myID == "Host") {
-            // Check if guest has placed ships
-            val guestBoard = convertFieldPosTo2DArray(gameModel?.guestFieldPos ?: listOf())
-            var shipCellCount = 0
-            guestBoard.forEach { row ->
-                row.forEach { cell ->
-                    if (cell in 2..7) {
-                        shipCellCount++
-                    }
-                }
-            }
-            shipCellCount >= 17 // Guest has placed all ships
-        } else {
-            // Check if host has placed ships
-            val hostBoard = convertFieldPosTo2DArray(gameModel?.hostFieldPos ?: listOf())
-            var shipCellCount = 0
-            hostBoard.forEach { row ->
-                row.forEach { cell ->
-                    if (cell in 2..7) {
-                        shipCellCount++
-                    }
-                }
-            }
-            shipCellCount >= 17 // Host has placed all ships
-        }
-    }
-
 
     fun resetSetup() {
-        // Reset the correct board based on player role
         if (GameData.myID == "Host" || gameModel?.gameId == "-1") {
             p_board = Array(ROWS) { IntArray(COLUMNS) { 0 } }
         } else {
@@ -648,24 +624,24 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
                 placingShip = true
                 val options = arrayOf("2", "3", "4")
                 val builder = android.app.AlertDialog.Builder(this)
-                builder.setTitle("Odaberi dužinu broda")
+                builder.setTitle("Odaberi duÅ¾inu broda")
                 builder.setItems(options) { dialog, which ->
                     shipLength = options[which].toInt()
 
                     if (shipLength == 3 && shipsOfLength3Placed >= 2) {
-                        Toast.makeText(this, "Već si postavio maksimalan broj brodova duljine 3 bloka!", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this, "VeÄ‡ si postavio maksimalan broj brodova duljine 3 bloka!", Toast.LENGTH_SHORT).show()
                         placingShip = false
                         return@setItems
                     }
 
                     if (shipLength == 4 && shipsOfLength4Placed >= 1) {
-                        Toast.makeText(this, "Već si postavio maksimalan broj brodova duljine 4 bloka!", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this, "VeÄ‡ si postavio maksimalan broj brodova duljine 4 bloka!", Toast.LENGTH_SHORT).show()
                         placingShip = false
                         return@setItems
                     }
 
                     if (shipLength == 2 && shipsOfLength2Placed >= 2) {
-                        Toast.makeText(this, "Već si postavio maksimalan broj brodova duljine 2 bloka!", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this, "VeÄ‡ si postavio maksimalan broj brodova duljine 2 bloka!", Toast.LENGTH_SHORT).show()
                         placingShip = false
                         return@setItems
                     }
@@ -690,7 +666,7 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
                                 ready_f()
                             }
                         } else {
-                            Toast.makeText(this, "Nemoguće postaviti brod! Izvan granica ili mjesto je već zauzeto.", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(this, "NemoguÄ‡e postaviti brod! Izvan granica ili mjesto je veÄ‡ zauzeto.", Toast.LENGTH_SHORT).show()
                             placingShip = false
                             numberOfShipsPlaced--
                             when (shipLength) {
@@ -722,7 +698,7 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
 
                 builder.show()
             } else {
-                Toast.makeText(this, "Nemoguće postaviti više brodova!", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "NemoguÄ‡e postaviti viÅ¡e brodova!", Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -731,7 +707,6 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
     private fun checkIfShipFits(row: Int, column: Int, horizontal: Boolean): Boolean {
         val requiredLength = shipLength
 
-        // Use the correct board based on player role
         val board = if (GameData.myID == "Host" || gameModel?.gameId == "-1") {
             p_board
         } else {
@@ -790,7 +765,6 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
             b7 = false
         }
 
-        // Use the correct board based on player role
         val board = if (GameData.myID == "Host" || gameModel?.gameId == "-1") {
             p_board
         } else {
@@ -801,13 +775,13 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
             for (i in column until column + requiredLength) {
                 board[row][i] = putLength
                 val idx = row * 10 + i
-                gridButtons[idx].setBackgroundColor(Color.RED)
+                gridButtons[idx].setBackgroundColor(Color.GREEN)
             }
         } else {
             for (i in row until row + requiredLength) {
                 board[i][column] = putLength
                 val idx = i * 10 + column
-                gridButtons[idx].setBackgroundColor(Color.RED)
+                gridButtons[idx].setBackgroundColor(Color.GREEN)
             }
         }
     }
@@ -847,7 +821,7 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
                 allowed = false
 
                 if (gameId == "-1") {
-                    // Offline game logic
+                    // offline
                     when (val cellValue = r_board?.get(row)?.get(column) ?: 0) {
                         0 -> handleMiss(row, column)
                         in 2..7 -> handleHit(row, column, cellValue)
@@ -855,13 +829,13 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
                             allowed = true
                             Toast.makeText(
                                 this@GameActivity,
-                                "Već pucano ovdje",
+                                "VeÄ‡ pucano ovdje",
                                 Toast.LENGTH_SHORT
                             ).show()
                         }
                     }
                 } else {
-                    // Online game logic
+                    // online
                     if (GameData.myID == "Host") {
                         when (val cellValue = r_board?.get(row)?.get(column) ?: 0) {
                             0 -> handleOnlineMiss(row, column)
@@ -1062,7 +1036,6 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
 
             if (cellValue in 2..7) {
                 // hit
-                // soundPool.play(hitSoundId, 1f, 1f, 1, 0, 1f)
 
                 lastHitX = x
                 lastHitY = y
@@ -1156,7 +1129,6 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
 
             } else {
                 // miss
-                // soundPool.play(missSoundId, 1f, 1f, 1, 0, 1f)
 
                 board[x][y] = 1
                 val idx = x * 10 + y
@@ -1182,9 +1154,7 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
         }
     }
 
-    // Function to check if all orthogonally adjacent cells have value 1
     private fun isOne(board: Array<IntArray>, row: Int, col: Int): Boolean {
-        // Define the four orthogonal directions (up, right, down, left)
         val directions = arrayOf(
             Pair(-1, 0),  // up
             Pair(0, 1),   // right
@@ -1192,23 +1162,19 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
             Pair(0, -1)   // left
         )
 
-        // Check each direction
         for ((dx, dy) in directions) {
             val newRow = row + dx
             val newCol = col + dy
 
-            // If position is outside the board, continue to next direction
             if (newRow < 0 || newRow >= 10 || newCol < 0 || newCol >= 10) {
                 continue
             }
 
-            // If any adjacent cell is not 1, return false
             if (board[newRow][newCol] != 1) {
                 return false
             }
         }
 
-        // All checked adjacent cells are 1
         return true
     }
 
@@ -1302,38 +1268,60 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
 
     private fun handleGameStateChange() {
         GameData.gameModel.observe(this) { model ->
+            if (model == null) return@observe
+
+            val previousGameStatus = gameModel?.gameStatus
+            val previousTurn = gameModel?.currPlayer
             gameModel = model
 
-            // If game is finished and we haven't shown the game over screen yet
             if (model.gameStatus == GameStatus.FINISHED && endgame == 0) {
                 endgame = if (model.winner == GameData.myID) 1 else 2
                 showGameOver(model.winner == GameData.myID)
             }
 
-            // Update boards from Firebase data
             if (model.gameId != "-1") {
-                p_board = convertFieldPosTo2DArray(model.hostFieldPos)
-                r_board = convertFieldPosTo2DArray(model.guestFieldPos)
 
-                // Update UI based on whose turn it is
-                updateUIForCurrentPlayer()
+                if (previousGameStatus != GameStatus.INPROGRESS && model.gameStatus == GameStatus.INPROGRESS) {
+                    if (GameData.myID == "Host") {
+                        model.hostFieldPos = p_board!!.flatMap { it.toList() }.map { it.toString() }.toMutableList()
+                    } else {
+                        model.guestFieldPos = r_board!!.flatMap { it.toList() }.map { it.toString() }.toMutableList()
+                    }
+
+
+                    UpdateGameData(model)
+
+                    opennedGame()
+                }
+
+                if (previousTurn != model.currPlayer && model.gameStatus == GameStatus.INPROGRESS) {
+                    updateUIForCurrentPlayer()
+
+                    Toast.makeText(this@GameActivity,
+                        if (model.currPlayer == GameData.myID) "Your turn" else "${model.currPlayer}'s turn",
+                        Toast.LENGTH_SHORT).show()
+                    if (model.currPlayer == GameData.myID)
+                        allowed = true
+                }
+
+                if (model.gameStatus == GameStatus.INPROGRESS) {
+                    p_board = convertFieldPosTo2DArray(model.hostFieldPos)
+                    r_board = convertFieldPosTo2DArray(model.guestFieldPos)
+                    updateUIForCurrentPlayer()
+                }
             }
 
             setUI()
         }
     }
 
-    // Function to handle disconnection or game abandonment
     private fun handleGameAbandon() {
-        // Add a back button listener
         onBackPressedDispatcher.addCallback(this) {
             if (gameModel?.gameId != "-1" && gameModel?.gameStatus == GameStatus.INPROGRESS) {
-                // Show confirmation dialog
                 val builder = android.app.AlertDialog.Builder(this@GameActivity)
                 builder.setTitle("Abandon Game")
                 builder.setMessage("Are you sure you want to abandon this game? You will forfeit the match.")
                 builder.setPositiveButton("Yes") { _, _ ->
-                    // Update game as finished with opponent as winner
                     gameModel?.apply {
                         gameStatus = GameStatus.FINISHED
                         winner = if (GameData.myID == "Host") "Guest" else "Host"
@@ -1353,7 +1341,6 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
 
 
     private fun handleOnlineHit(row: Int, col: Int, shipType: Int) {
-        // Disable interaction during animation
         allowed = false
 
         if (GameData.myID == "Host") {
@@ -1361,11 +1348,9 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
                 board[row][col] = shipType + 10
                 gridButtons[row * 10 + col].setBackgroundColor(Color.RED)
 
-                // Check if ship is sunk
                 var shipSunk = false
                 var remainingCells = 0
 
-                // Count remaining cells of this ship type
                 for (i in 0 until 10) {
                     for (j in 0 until 10) {
                         if (board[i][j] == shipType) {
@@ -1379,48 +1364,50 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
                     sinkOnlineShip(shipType)
                 }
 
-                // Add delay before updating game model
-                handler.postDelayed({
-                    // Update game model
-                    gameModel?.apply {
-                        guestFieldPos = r_board!!.flatMap { it.toList() }.map { it.toString() }.toMutableList()
-                        currPlayer = "Guest"
+                gameModel?.apply {
+                    guestFieldPos = r_board!!.flatMap { it.toList() }.map { it.toString() }.toMutableList()
 
-                        // Check for win condition
-                        if (shipSunk) {
-                            var allShipsSunk = true
-                            for (i in 0 until 10) {
-                                for (j in 0 until 10) {
-                                    if (r_board!![i][j] in 2..7) {
-                                        allShipsSunk = false
-                                        break
-                                    }
+                    if (shipSunk) {
+                        var allShipsSunk = true
+                        for (i in 0 until 10) {
+                            for (j in 0 until 10) {
+                                if (r_board!![i][j] in 2..7) {
+                                    allShipsSunk = false
+                                    break
                                 }
-                                if (!allShipsSunk) break
                             }
-
-                            if (allShipsSunk) {
-                                gameStatus = GameStatus.FINISHED
-                                winner = "Host"
-                                showGameOver(true)
-                            }
+                            if (!allShipsSunk) break
                         }
 
-                        UpdateGameData(this)
+                        if (allShipsSunk) {
+                            gameStatus = GameStatus.FINISHED
+                            winner = "Host"
+                        }
                     }
-                }, 2000) // 2 second delay
+
+                    UpdateGameData(this)
+
+                    handler.postDelayed({
+                        if (gameStatus == GameStatus.FINISHED) {
+                            showGameOver(winner == GameData.myID)
+                        } else {
+                            showGuestGrid()
+                            Toast.makeText(this@GameActivity, "You hit a ship! Shoot again.", Toast.LENGTH_SHORT).show()
+
+                            // Re-enable interaction
+                            allowed = true
+                        }
+                    }, 1500)
+                }
             }
         } else {
-            // Guest player
             p_board?.let { board ->
                 board[row][col] = shipType + 10
                 gridButtons[row * 10 + col].setBackgroundColor(Color.RED)
 
-                // Check if ship is sunk
                 var shipSunk = false
                 var remainingCells = 0
 
-                // Count remaining cells of this ship type
                 for (i in 0 until 10) {
                     for (j in 0 until 10) {
                         if (board[i][j] == shipType) {
@@ -1434,42 +1421,46 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
                     sinkOnlineShip(shipType)
                 }
 
-                // Add delay before updating game model
-                handler.postDelayed({
-                    // Update game model
-                    gameModel?.apply {
-                        hostFieldPos = p_board!!.flatMap { it.toList() }.map { it.toString() }.toMutableList()
-                        currPlayer = "Host"
+                gameModel?.apply {
+                    hostFieldPos = p_board!!.flatMap { it.toList() }.map { it.toString() }.toMutableList()
 
-                        // Check for win condition
-                        if (shipSunk) {
-                            var allShipsSunk = true
-                            for (i in 0 until 10) {
-                                for (j in 0 until 10) {
-                                    if (p_board!![i][j] in 2..7) {
-                                        allShipsSunk = false
-                                        break
-                                    }
+                    if (shipSunk) {
+                        var allShipsSunk = true
+                        for (i in 0 until 10) {
+                            for (j in 0 until 10) {
+                                if (p_board!![i][j] in 2..7) {
+                                    allShipsSunk = false
+                                    break
                                 }
-                                if (!allShipsSunk) break
                             }
-
-                            if (allShipsSunk) {
-                                gameStatus = GameStatus.FINISHED
-                                winner = "Guest"
-                                showGameOver(true)
-                            }
+                            if (!allShipsSunk) break
                         }
 
-                        UpdateGameData(this)
+                        if (allShipsSunk) {
+                            gameStatus = GameStatus.FINISHED
+                            winner = "Guest"
+                        }
                     }
-                }, 2000) // 2 second delay
+
+                    UpdateGameData(this)
+
+                    handler.postDelayed({
+                        if (gameStatus == GameStatus.FINISHED) {
+                            showGameOver(winner == GameData.myID)
+                        } else {
+                            showHostGridHidden()
+                            binding.gameStatusTxt.text = "Your turn!"
+                            Toast.makeText(this@GameActivity, "You hit a ship! Shoot again.", Toast.LENGTH_SHORT).show()
+
+                            allowed = true
+                        }
+                    }, 1500)
+                }
             }
         }
     }
 
     private fun handleOnlineMiss(row: Int, col: Int) {
-        // Disable interaction during animation
         allowed = false
 
         if (GameData.myID == "Host") {
@@ -1477,31 +1468,42 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
                 board[row][col] = 1
                 gridButtons[row * 10 + col].setBackgroundColor(Color.DKGRAY)
 
-                // Add delay before updating game model
-                handler.postDelayed({
-                    // Update game model
-                    gameModel?.apply {
-                        guestFieldPos = r_board!!.flatMap { it.toList() }.map { it.toString() }.toMutableList()
+                gameModel?.apply {
+                    guestFieldPos = r_board!!.flatMap { it.toList() }.map { it.toString() }.toMutableList()
+
+                    UpdateGameData(this)
+
+                    handler.postDelayed({
                         currPlayer = "Guest"
                         UpdateGameData(this)
-                    }
-                }, 2000) // 2 second delay
+
+                        showHostGrid()
+                        binding.gameStatusTxt.text = "Guest's turn"
+                        Toast.makeText(this@GameActivity, "You missed! Guest's turn now.", Toast.LENGTH_SHORT).show()
+                        allowed = false
+                    }, 1500)
+                }
             }
         } else {
-            // Guest player
             p_board?.let { board ->
                 board[row][col] = 1
                 gridButtons[row * 10 + col].setBackgroundColor(Color.DKGRAY)
 
-                // Add delay before updating game model
-                handler.postDelayed({
-                    // Update game model
-                    gameModel?.apply {
-                        hostFieldPos = p_board!!.flatMap { it.toList() }.map { it.toString() }.toMutableList()
+                gameModel?.apply {
+                    hostFieldPos = p_board!!.flatMap { it.toList() }.map { it.toString() }.toMutableList()
+
+                    UpdateGameData(this)
+
+                    handler.postDelayed({
                         currPlayer = "Host"
                         UpdateGameData(this)
-                    }
-                }, 2000) // 2 second delay
+
+                        showGuestGridVisible()
+                        binding.gameStatusTxt.text = "Host's turn"
+                        Toast.makeText(this@GameActivity, "You missed! Host's turn now.", Toast.LENGTH_SHORT).show()
+                        allowed = false
+                    }, 1500)
+                }
             }
         }
     }
@@ -1518,7 +1520,6 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
                         val idx = i * 10 + j
                         gridButtons[idx].setBackgroundColor(Color.BLACK)
 
-                        // Mark surrounding cells as missed
                         for (dx in -1..1) {
                             for (dy in -1..1) {
                                 if (dx == 0 && dy == 0) continue
@@ -1540,17 +1541,11 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
     }
 
     private fun updateUIForCurrentPlayer() {
-        // This function is called when the game state changes
-        // We want to make sure we respect the delay before allowing interaction
-
         if (gameModel?.gameId != "-1") {
             if (GameData.myID == "Host") {
                 if (gameModel?.currPlayer == "Host") {
                     showGuestGrid()
-                    // Allow interaction after a delay
-                    handler.postDelayed({
-                        allowed = true
-                    }, 500) // Small additional delay to ensure UI updates first
+                    allowed = true
                 } else {
                     showHostGrid()
                     allowed = false
@@ -1559,60 +1554,56 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
                 // Guest player
                 if (gameModel?.currPlayer == "Guest") {
                     showHostGridHidden()
-                    // Allow interaction after a delay
-                    handler.postDelayed({
-                        allowed = true
-                    }, 500) // Small additional delay to ensure UI updates first
+                    allowed = true
                 } else {
                     showGuestGridVisible()
                     allowed = false
                 }
             }
+
+            binding.gameStatusTxt.text = when(GameData.myID) {
+                gameModel?.currPlayer -> "Your turn"
+                else -> "${gameModel?.currPlayer}'s turn"
+            }
         }
     }
 
 
-
     fun continue_f() {
         allowed = false
-
         handler.postDelayed({
             gameModel?.apply {
                 currPlayer = if (currPlayer == "Host") "Guest" else "Host"
-
                 UpdateGameData(this)
 
-                if (currPlayer == "Host") {
-                    showGuestGrid()
+                if (gameModel?.gameId == "-1") {
+                    if (currPlayer == "Host") {
+                        showGuestGrid()
+                        allowed = true
+                    } else {
+                        showHostGrid()
+                        handler.postDelayed({
+                            botTurn()
+                        }, 500)
+                    }
                 } else {
-                    showHostGrid()
-                }
-
-                if (currPlayer == "Host") {
-                    allowed = true
-                } else {
-                    handler.postDelayed({
-                        botTurn()
-                    }, 500)
+                    updateUIForCurrentPlayer()
                 }
             }
-        }, 2000) // ms
+        }, 2000)
     }
 
     // ------------------------------------------ endgame logic ---------------------------------------------------
 
     private fun showGameOver(win: Boolean) {
-        // Inflate the popup layout
         val inflater = LayoutInflater.from(this)
         val popupView = inflater.inflate(R.layout.game_over_popup, null)
 
-        // Create the popup window
         val width = LinearLayout.LayoutParams.MATCH_PARENT
         val height = LinearLayout.LayoutParams.MATCH_PARENT
         val focusable = true
         val popupWindow = PopupWindow(popupView, width, height, focusable)
 
-        // Set the result text and color
         val resultText = popupView.findViewById<TextView>(R.id.gameResultText)
         if (win) {
             resultText.text = "VICTORY"
@@ -1622,11 +1613,9 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
             resultText.setTextColor(Color.parseColor("#F44336")) // Red
         }
 
-        // Create and display the opponent's board with all ships visible
         val boardContainer = popupView.findViewById<FrameLayout>(R.id.opponentBoardContainer)
         createOpponentFinalBoard(boardContainer)
 
-        // Set up button listeners
         popupView.findViewById<Button>(R.id.rematchButton).setOnClickListener {
             popupWindow.dismiss()
             resetGame()
@@ -1634,15 +1623,13 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
 
         popupView.findViewById<Button>(R.id.exitButton).setOnClickListener {
             popupWindow.dismiss()
-            finish() // Return to menu
+            finish()
         }
 
-        // Show the popup
         popupWindow.showAtLocation(binding.root, Gravity.CENTER, 0, 0)
     }
 
     private fun createOpponentFinalBoard(container: FrameLayout) {
-        // Create a new grid to show the final state of the opponent's board
         val gridLayout = GridLayout(this).apply {
             rowCount = 10
             columnCount = 10
@@ -1657,7 +1644,6 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
 
         container.addView(gridLayout)
 
-        // Create the grid buttons with fixed size
         val displayMetrics = resources.displayMetrics
         val screenWidth = displayMetrics.widthPixels - 100
         val buttonSize = screenWidth / 10
@@ -1686,7 +1672,6 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
             gridLayout.addView(button)
         }
 
-        // Set the colors based on the final board state
         r_board?.let { board ->
             for (row in 0 until 10) {
                 for (col in 0 until 10) {
