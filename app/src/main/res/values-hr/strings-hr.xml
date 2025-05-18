@@ -9,5 +9,7 @@
     <string name="settings">Postavke</string>
     <string name="exit">Izlaz</string>
     <string name="text">Postavite svoje brodove na mrežu. Naizmjenično pucajte na protivnikovu mrežu. Pogodak će biti označen, a vi nastavljate pucati. Potopite sve neprijateljske brodove za pobjedu!</string>
+    <string name="back">Nazad na početnu stranicu</string>
+    <string name="howplay">Kako igrati</string>
 
 </resources>
