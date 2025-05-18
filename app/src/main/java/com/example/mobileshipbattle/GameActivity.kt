@@ -1,16 +1,13 @@
 package com.example.mobileshipbattle
 
-import android.content.Context
-import android.content.res.Configuration
 import android.graphics.Color
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.provider.CalendarContract.Colors
 import android.util.TypedValue
 import android.view.Gravity
 import android.view.LayoutInflater
-import android.view.Menu
-import android.view.MenuItem
 import android.view.View
 import android.widget.Button
 import android.widget.FrameLayout
@@ -21,10 +18,8 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.addCallback
 import androidx.appcompat.app.AppCompatActivity
-import androidx.appcompat.widget.Toolbar
 import com.example.mobileshipbattle.databinding.ActivityGameBinding
 import com.google.firebase.database.collection.LLRBNode
-import java.util.Locale
 
 class GameActivity : AppCompatActivity(), View.OnClickListener {
 
@@ -103,13 +98,15 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
 
     private var ready = false
 
-
-    val waterColor = resources.getColor(R.color.water)
+    val color_water = Color.rgb(0, 211, 255)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityGameBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        p_board = Array(ROWS) { IntArray(COLUMNS) { 0 } }
+        r_board = Array(ROWS) { IntArray(COLUMNS) { 0 } }
 
         GameData.fetchGameModel()
 
@@ -129,10 +126,6 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
         }
 
         opennedSetup()
-
-        //jezik
-        val toolbar: Toolbar = findViewById(R.id.toolbar)
-        setSupportActionBar(toolbar)
     }
 
     fun CreateGrid() {
@@ -178,7 +171,7 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
 
                 val button = Button(this).apply {
                     layoutParams = params
-                    setBackgroundColor(waterColor)
+                    setBackgroundColor(color_water)
                     text = ""
                     tag = i.toString()
                     id = View.generateViewId()
@@ -201,7 +194,7 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
                 val button = gridButtons[index]
 
                 when (value) {
-                    0 -> button.setBackgroundColor(waterColor) // empty
+                    0 -> button.setBackgroundColor(color_water) // empty
                     1 -> button.setBackgroundColor(Color.DKGRAY) // missed
                     in 2..7 -> button.setBackgroundColor(Color.GREEN) // not hit
                     in 12..17 -> button.setBackgroundColor(Color.RED) // hit
@@ -220,7 +213,7 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
                 val button = gridButtons[index]
 
                 when (value) {
-                    0, in 2..7 -> button.setBackgroundColor(waterColor) // empty/unknown
+                    0, in 2..7 -> button.setBackgroundColor(color_water) // empty/unknown
                     1 -> button.setBackgroundColor(Color.DKGRAY) // missed
                     in 12..17 -> button.setBackgroundColor(Color.RED) // hit
                     -1 -> button.setBackgroundColor(Color.BLACK) // sinked
@@ -238,7 +231,7 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
                 val button = gridButtons[index]
 
                 when (value) {
-                    0, in 2..7 -> button.setBackgroundColor(waterColor) // empty/unknown
+                    0, in 2..7 -> button.setBackgroundColor(color_water) // empty/unknown
                     1 -> button.setBackgroundColor(Color.DKGRAY) // missed
                     in 12..17 -> button.setBackgroundColor(Color.RED) // hit
                     -1 -> button.setBackgroundColor(Color.BLACK) // sinked
@@ -256,7 +249,7 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
                 val button = gridButtons[index]
 
                 when (value) {
-                    0 -> button.setBackgroundColor(Color.BLUE) // empty
+                    0 -> button.setBackgroundColor(color_water) // empty
                     1 -> button.setBackgroundColor(Color.DKGRAY) // missed
                     in 2..7 -> button.setBackgroundColor(Color.GREEN) // not hit
                     in 12..17 -> button.setBackgroundColor(Color.RED) // hit
@@ -277,12 +270,18 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
         ready = false
         placingShip = false
 
-        // Initialize the correct board based on player role
-        if (GameData.myID == "Host" || gameModel?.gameId == "-1") {
+        if (gameModel?.gameId == "-1") {
+            GameData.myID = "Host"
+            // Initialize both boards for offline mode
             p_board = Array(ROWS) { IntArray(COLUMNS) { 0 } }
-        } else {
-            // For Guest player, initialize r_board instead
             r_board = Array(ROWS) { IntArray(COLUMNS) { 0 } }
+        } else {
+            // For online mode, initialize based on player role
+            if (GameData.myID == "Host") {
+                p_board = Array(ROWS) { IntArray(COLUMNS) { 0 } }
+            } else {
+                r_board = Array(ROWS) { IntArray(COLUMNS) { 0 } }
+            }
         }
 
         binding.startGameBtn.visibility = View.VISIBLE
@@ -604,7 +603,6 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
 
 
     fun resetSetup() {
-        p_board = Array(ROWS) { IntArray(COLUMNS) { 0 } }
         // Reset the correct board based on player role
         if (GameData.myID == "Host" || gameModel?.gameId == "-1") {
             p_board = Array(ROWS) { IntArray(COLUMNS) { 0 } }
@@ -616,16 +614,13 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
         shipsOfLength2Placed = 0
         shipsOfLength3Placed = 0
         shipsOfLength4Placed = 0
-
         b6 = false
         b7 = false
-
         ready = false
         placingShip = false
 
         for (i in 0 until ROWS * COLUMNS) {
-            gridButtons[i].setBackgroundColor(Color.BLUE)
-            gridButtons[i].setBackgroundColor(waterColor)
+            gridButtons[i].setBackgroundColor(color_water)
         }
     }
 
@@ -648,11 +643,9 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
 
 
     fun selectedShipPos(row: Int, column: Int) {
-
         if (!ready && !placingShip) {
             if (numberOfShipsPlaced < 5) {
                 placingShip = true
-
                 val options = arrayOf("2", "3", "4")
                 val builder = android.app.AlertDialog.Builder(this)
                 builder.setTitle("Odaberi dužinu broda")
@@ -682,7 +675,6 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
                         3 -> shipsOfLength3Placed++
                         4 -> shipsOfLength4Placed++
                     }
-                    numberOfShipsPlaced++
 
                     numberOfShipsPlaced++
                     val orientationOptions = arrayOf("Horizontalno", "Vertikalno")
@@ -710,7 +702,6 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
                     }
 
                     orientationDialog.setOnCancelListener {
-                        // if cancled dorection
                         // if canceled direction
                         placingShip = false
                         numberOfShipsPlaced--
@@ -725,7 +716,6 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
                 }
 
                 builder.setOnCancelListener {
-                    // is cencled size
                     // if canceled size
                     placingShip = false
                 }
@@ -734,14 +724,13 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
             } else {
                 Toast.makeText(this, "Nemoguće postaviti više brodova!", Toast.LENGTH_SHORT).show()
             }
-            return
         }
     }
 
 
     private fun checkIfShipFits(row: Int, column: Int, horizontal: Boolean): Boolean {
         val requiredLength = shipLength
-        val board = p_board ?: return false
+
         // Use the correct board based on player role
         val board = if (GameData.myID == "Host" || gameModel?.gameId == "-1") {
             p_board
@@ -764,7 +753,6 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
                 }
             }
         }
-
         return true
     }
 
@@ -802,7 +790,12 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
             b7 = false
         }
 
-        val board = p_board ?: return
+        // Use the correct board based on player role
+        val board = if (GameData.myID == "Host" || gameModel?.gameId == "-1") {
+            p_board
+        } else {
+            r_board
+        } ?: return
 
         if (horizontal) {
             for (i in column until column + requiredLength) {
@@ -838,7 +831,6 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
     }
 
     override fun onClick(v: View?) {
-
         gameModel?.apply {
             val clickPos = (v?.tag as? String)?.toIntOrNull() ?: return
             val row = clickPos / 10
@@ -853,16 +845,50 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
 
             if (currPlayer == GameData.myID && allowed) {
                 allowed = false
-                when (val cellValue = r_board?.get(row)?.get(column) ?: 0) {
-                    0 -> handleMiss(row, column)
-                    in 2..7 -> handleHit(row, column, cellValue)
-                    1, in 12..17, -1 -> {
-                        allowed = true
-                        Toast.makeText(
-                            this@GameActivity,
-                            "Već pucano ovdje",
-                            Toast.LENGTH_SHORT
-                        ).show()
+
+                if (gameId == "-1") {
+                    // Offline game logic
+                    when (val cellValue = r_board?.get(row)?.get(column) ?: 0) {
+                        0 -> handleMiss(row, column)
+                        in 2..7 -> handleHit(row, column, cellValue)
+                        1, in 12..17, -1 -> {
+                            allowed = true
+                            Toast.makeText(
+                                this@GameActivity,
+                                "Već pucano ovdje",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                    }
+                } else {
+                    // Online game logic
+                    if (GameData.myID == "Host") {
+                        when (val cellValue = r_board?.get(row)?.get(column) ?: 0) {
+                            0 -> handleOnlineMiss(row, column)
+                            in 2..7 -> handleOnlineHit(row, column, cellValue)
+                            1, in 12..17, -1 -> {
+                                allowed = true
+                                Toast.makeText(
+                                    this@GameActivity,
+                                    "Already fired here",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
+                        }
+                    } else {
+                        // Guest player
+                        when (val cellValue = p_board?.get(row)?.get(column) ?: 0) {
+                            0 -> handleOnlineMiss(row, column)
+                            in 2..7 -> handleOnlineHit(row, column, cellValue)
+                            1, in 12..17, -1 -> {
+                                allowed = true
+                                Toast.makeText(
+                                    this@GameActivity,
+                                    "Already fired here",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
+                        }
                     }
                 }
             }
@@ -1669,8 +1695,7 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
                     val button = finalButtons[index]
 
                     when (value) {
-                        0 -> button.setBackgroundColor(Color.BLUE) // Empty water
-                        0 -> button.setBackgroundColor(waterColor) // Empty water
+                        0 -> button.setBackgroundColor(color_water) // Empty water
                         1 -> button.setBackgroundColor(Color.DKGRAY) // Missed shot
                         in 2..7 -> button.setBackgroundColor(Color.GREEN) // Unhit ship (now visible)
                         in 12..17 -> button.setBackgroundColor(Color.YELLOW) // Hit ship
@@ -1723,49 +1748,6 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
             binding.startGameBtn.visibility = View.VISIBLE
             binding.resetSetupBtn.visibility = View.VISIBLE
         }
-    }
-
-
-    // language
-    override fun attachBaseContext(newBase: Context) {
-        val prefs = newBase.getSharedPreferences("settings", MODE_PRIVATE)
-        val lang = prefs.getString("app_language", "en") ?: "en"
-        val locale = Locale(lang)
-        val config = Configuration()
-        config.setLocale(locale)
-        val context = newBase.createConfigurationContext(config)
-        super.attachBaseContext(context)
-    }
-
-    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
-        menuInflater.inflate(R.menu.main_menu, menu)
-        return true
-    }
-
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        when (item.itemId) {
-            R.id.lang_en -> {
-                changeLanguage("en")
-                return true
-            }
-            R.id.lang_hr -> {
-                changeLanguage("hr")
-                return true
-            }
-        }
-        return super.onOptionsItemSelected(item)
-    }
-
-    // promjeni jezik i restart app
-    private fun changeLanguage(lang: String) {
-        val prefs = getSharedPreferences("settings", MODE_PRIVATE).edit()
-        prefs.putString("app_language", lang)
-        prefs.apply()
-
-        // reload app i novi jezik
-        val intent = intent
-        finish()
-        startActivity(intent)
     }
 
 }
