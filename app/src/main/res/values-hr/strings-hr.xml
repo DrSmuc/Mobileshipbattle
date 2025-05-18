@@ -4,5 +4,10 @@
     <string name="change_language">Promijeni jezik</string>
     <string name="english">Engleski</string>
     <string name="croatian">Hrvatski</string>
+    <string name="start_game">Započni Igru</string>
+    <string name="how_to_play">Kako Igrati</string>
+    <string name="settings">Postavke</string>
+    <string name="exit">Izlaz</string>
+    <string name="text">Postavite svoje brodove na mrežu. Naizmjenično pucajte na protivnikovu mrežu. Pogodak će biti označen, a vi nastavljate pucati. Potopite sve neprijateljske brodove za pobjedu!</string>
 
 </resources>

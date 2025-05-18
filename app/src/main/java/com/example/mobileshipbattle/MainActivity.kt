@@ -38,7 +38,7 @@ public class MainActivity : AppCompatActivity() {
         }
 
         findViewById<Button>(R.id.settings_button).setOnClickListener {
-            startActivity(Intent(this, SettingsActivity ::class.java))
+            startActivity(Intent(this, SettingsActivity::class.java))
         }
 
         findViewById<Button>(R.id.exit_button).setOnClickListener {

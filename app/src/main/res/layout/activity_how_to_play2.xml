@@ -52,7 +52,7 @@
                 android:id="@+id/instructions_text"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="• Place your ships on the grid.\n• Take turns firing at your opponent's grid.\n• A hit will be marked, and you keep firing.\n• Sink all enemy ships to win!"
+                android:text="@string/text"
                 android:textColor="#EEEEEE"
                 android:textSize="16sp" />
 
