@@ -26,5 +26,12 @@ class MusicService : Service() {
         super.onDestroy()
     }
 
+    override fun onTaskRemoved(rootIntent: Intent?) {
+        mediaPlayer.stop()
+        mediaPlayer.release()
+        stopSelf()
+        super.onTaskRemoved(rootIntent)
+    }
+
     override fun onBind(intent: Intent?): IBinder? = null
 }

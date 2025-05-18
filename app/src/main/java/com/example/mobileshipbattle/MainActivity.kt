@@ -37,13 +37,21 @@ class MainActivity : AppCompatActivity() {
         }
 
         findViewById<Button>(R.id.exit_button).setOnClickListener {
-            finishAffinity() // Closes the entire app
+            stopService(Intent(this, MusicService::class.java))
+            finishAffinity()
         }
+
 
         // Setup Toolbar
         val toolbar: Toolbar = findViewById(R.id.toolbar)
         setSupportActionBar(toolbar)
     }
+
+    override fun onStop() {
+        super.onStop()
+        stopService(Intent(this, MusicService::class.java))
+    }
+
 
     // Language
     override fun attachBaseContext(newBase: Context) {
