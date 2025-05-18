@@ -11,4 +11,16 @@
     <string name="back">Back to menu</string>
     <string name="howplay">How to play</string>
 
+    //u home activity
+    <string name="play_offline">Play Offline</string>
+    <string name="create_game_online">Create Game Online</string>
+    <string name="join_game_online">Join Game Online</string>
+    <string name="enter_game_id">Enter game ID</string>
+    <string name="or">or</string>
+
+    //u game activity
+    <string name="gamenostart">Game not started</string>
+    <string name="resetfleet">Reset fleet</string>
+
+
 </resources>

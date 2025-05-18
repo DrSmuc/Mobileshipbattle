@@ -12,4 +12,15 @@
     <string name="back">Nazad na početnu stranicu</string>
     <string name="howplay">Kako igrati</string>
 
+    //u home activity
+    <string name="play_offline">Igraj Bez Interneta</string>
+    <string name="create_game_online">Kreiraj Igru Online</string>
+    <string name="join_game_online">Pridruži se Igri Online</string>
+    <string name="enter_game_id">Unesi ID igre</string>
+    <string name="or">ili</string>
+
+    //u game activity
+    <string name="gamenostart">Igrica nije počela</string>
+    <string name="resetfleet">Resetiraj brodove</string>
+
 </resources>
