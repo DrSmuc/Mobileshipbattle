@@ -78,7 +78,7 @@
                 android:id="@+id/start_button"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="𝑺𝒕𝒂𝒓𝒕 𝑮𝒂𝒎𝒆"
+                android:text="@string/start_game"
                 android:textSize="18sp"
                 android:backgroundTint="#990066CC"
                 android:textColor="#FFFFFF" />
@@ -88,7 +88,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
-                android:text="𝑯𝒐𝒘 𝒕𝒐 𝑷𝒍𝒂𝒚"
+                android:text="@string/how_to_play"
                 android:textSize="18sp"
                 android:backgroundTint="#990066CC"
                 android:textColor="#FFFFFF" />
@@ -98,7 +98,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
-                android:text="𝑺𝒆𝒕𝒕𝒊𝒏𝒈𝒔"
+                android:text="@string/settings"
                 android:textSize="18sp"
                 android:backgroundTint="#990066CC"
                 android:textColor="#FFFFFF" />
@@ -108,7 +108,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
-                android:text="𝑬𝒙𝒊𝒕"
+                android:text="@string/exit"
                 android:textSize="18sp"
                 android:backgroundTint="#990066CC"
                 android:textColor="#FFFFFF" />

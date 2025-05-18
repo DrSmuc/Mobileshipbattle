@@ -1,5 +1,7 @@
 package com.example.mobileshipbattle
 
+import android.content.Context
+import android.content.res.Configuration
 import android.graphics.Color
 import android.os.Bundle
 import android.os.Handler
@@ -7,6 +9,8 @@ import android.os.Looper
 import android.util.TypedValue
 import android.view.Gravity
 import android.view.LayoutInflater
+import android.view.Menu
+import android.view.MenuItem
 import android.view.View
 import android.widget.Button
 import android.widget.FrameLayout
@@ -17,8 +21,10 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.addCallback
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.Toolbar
 import com.example.mobileshipbattle.databinding.ActivityGameBinding
 import com.google.firebase.database.collection.LLRBNode
+import java.util.Locale
 
 class GameActivity : AppCompatActivity(), View.OnClickListener {
 
@@ -123,6 +129,10 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
         }
 
         opennedSetup()
+
+        //jezik
+        val toolbar: Toolbar = findViewById(R.id.toolbar)
+        setSupportActionBar(toolbar)
     }
 
     fun CreateGrid() {
@@ -1713,6 +1723,49 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
             binding.startGameBtn.visibility = View.VISIBLE
             binding.resetSetupBtn.visibility = View.VISIBLE
         }
+    }
+
+
+    // language
+    override fun attachBaseContext(newBase: Context) {
+        val prefs = newBase.getSharedPreferences("settings", MODE_PRIVATE)
+        val lang = prefs.getString("app_language", "en") ?: "en"
+        val locale = Locale(lang)
+        val config = Configuration()
+        config.setLocale(locale)
+        val context = newBase.createConfigurationContext(config)
+        super.attachBaseContext(context)
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        menuInflater.inflate(R.menu.main_menu, menu)
+        return true
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        when (item.itemId) {
+            R.id.lang_en -> {
+                changeLanguage("en")
+                return true
+            }
+            R.id.lang_hr -> {
+                changeLanguage("hr")
+                return true
+            }
+        }
+        return super.onOptionsItemSelected(item)
+    }
+
+    // promjeni jezik i restart app
+    private fun changeLanguage(lang: String) {
+        val prefs = getSharedPreferences("settings", MODE_PRIVATE).edit()
+        prefs.putString("app_language", lang)
+        prefs.apply()
+
+        // reload app i novi jezik
+        val intent = intent
+        finish()
+        startActivity(intent)
     }
 
 }
