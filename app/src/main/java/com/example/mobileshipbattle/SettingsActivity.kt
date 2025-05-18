@@ -34,21 +34,14 @@ class SettingsActivity : AppCompatActivity() {
 
         val prefs = getSharedPreferences("settings", MODE_PRIVATE)
 
-        // Restore switch state
+        // Restore music switch state only
         binding.switchMusic.isChecked = prefs.getBoolean("music_enabled", false)
-        binding.switchSound.isChecked = prefs.getBoolean("sound_enabled", true)
 
         binding.backSettings.setOnClickListener {
             finish()
         }
 
-        // Sound toggle
-        binding.switchSound.setOnCheckedChangeListener { _, isChecked ->
-            prefs.edit().putBoolean("sound_enabled", isChecked).apply()
-            Toast.makeText(this, "Sound ${if (isChecked) "ON" else "OFF"}", Toast.LENGTH_SHORT).show()
-        }
-
-        // Music toggle
+        // Music toggle only
         binding.switchMusic.setOnCheckedChangeListener { _, isChecked ->
             prefs.edit().putBoolean("music_enabled", isChecked).apply()
             val intent = Intent(this, MusicService::class.java)

@@ -47,11 +47,6 @@ class MainActivity : AppCompatActivity() {
         setSupportActionBar(toolbar)
     }
 
-    override fun onStop() {
-        super.onStop()
-        stopService(Intent(this, MusicService::class.java))
-    }
-
 
     // Language
     override fun attachBaseContext(newBase: Context) {

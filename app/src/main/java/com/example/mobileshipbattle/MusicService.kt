@@ -16,19 +16,28 @@ class MusicService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        mediaPlayer.start()
+        if (!mediaPlayer.isPlaying) {
+            mediaPlayer.start()
+        }
         return START_STICKY
     }
 
     override fun onDestroy() {
-        mediaPlayer.stop()
-        mediaPlayer.release()
+        if (this::mediaPlayer.isInitialized) {
+            if (mediaPlayer.isPlaying) {
+                mediaPlayer.stop()
+            }
+            mediaPlayer.release()
+        }
         super.onDestroy()
     }
 
     override fun onTaskRemoved(rootIntent: Intent?) {
-        mediaPlayer.stop()
-        mediaPlayer.release()
+        // This is called when user swipes the app away from recent apps
+        if (this::mediaPlayer.isInitialized && mediaPlayer.isPlaying) {
+            mediaPlayer.stop()
+            mediaPlayer.release()
+        }
         stopSelf()
         super.onTaskRemoved(rootIntent)
     }
