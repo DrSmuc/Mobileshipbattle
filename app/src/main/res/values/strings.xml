@@ -11,6 +11,10 @@
     <string name="back">Back to menu</string>
     <string name="howplay">How to play</string>
 
+    //u settings
+    <string name="sound">Enable sounds</string>
+    <string name="music">Enable music</string>
+
     //u home activity
     <string name="play_offline">Play Offline</string>
     <string name="create_game_online">Create Game Online</string>
