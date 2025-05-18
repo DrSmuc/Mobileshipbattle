@@ -7,30 +7,25 @@ import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
 import android.widget.Button
-import android.widget.ImageView
-import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
-import com.example.mobileshipbattle.databinding.ActivityHomeBinding
-import com.google.firebase.firestore.FirebaseFirestore
 import java.util.Locale
 
-
-
-
-
-public class MainActivity : AppCompatActivity() {
+class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        val prefs = getSharedPreferences("settings", MODE_PRIVATE)
+        if (prefs.getBoolean("music_enabled", false)) {
+            startService(Intent(this, MusicService::class.java))
+        }
 
-        // game start
+
+        // Game start
         findViewById<Button>(R.id.start_button).setOnClickListener {
-             startActivity(Intent(this, HomeActivity::class.java))
+            startActivity(Intent(this, HomeActivity::class.java))
         }
 
         findViewById<Button>(R.id.how_to_play_button).setOnClickListener {
@@ -42,17 +37,25 @@ public class MainActivity : AppCompatActivity() {
         }
 
         findViewById<Button>(R.id.exit_button).setOnClickListener {
-            finishAffinity() // Closes the entire app
+            stopService(Intent(this, MusicService::class.java))
+            finishAffinity()
         }
+
 
         // Setup Toolbar
         val toolbar: Toolbar = findViewById(R.id.toolbar)
         setSupportActionBar(toolbar)
     }
 
-    // language
+    override fun onStop() {
+        super.onStop()
+        stopService(Intent(this, MusicService::class.java))
+    }
+
+
+    // Language
     override fun attachBaseContext(newBase: Context) {
-        val prefs = newBase.getSharedPreferences("settings", MODE_PRIVATE)
+        val prefs = newBase.getSharedPreferences("settings", Context.MODE_PRIVATE)
         val lang = prefs.getString("app_language", "en") ?: "en"
         val locale = Locale(lang)
         val config = Configuration()
@@ -80,13 +83,11 @@ public class MainActivity : AppCompatActivity() {
         return super.onOptionsItemSelected(item)
     }
 
-    // promjeni jezik i restart app
     private fun changeLanguage(lang: String) {
-        val prefs = getSharedPreferences("settings", MODE_PRIVATE).edit()
+        val prefs = getSharedPreferences("settings", Context.MODE_PRIVATE).edit()
         prefs.putString("app_language", lang)
         prefs.apply()
 
-        // reload app i novi jezik
         val intent = intent
         finish()
         startActivity(intent)

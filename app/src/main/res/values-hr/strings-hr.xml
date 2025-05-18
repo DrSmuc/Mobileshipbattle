@@ -12,6 +12,10 @@
     <string name="back">Nazad na početnu stranicu</string>
     <string name="howplay">Kako igrati</string>
 
+    //u settings
+    <string name="sound">omogući zvuk</string>
+    <string name="music">omogući muziku</string>
+
     //u home activity
     <string name="play_offline">Igraj Bez Interneta</string>
     <string name="create_game_online">Kreiraj Igru Online</string>
