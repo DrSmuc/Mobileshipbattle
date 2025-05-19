@@ -109,4 +109,15 @@
         app:layout_constraintHorizontal_bias="0.503"
         app:layout_constraintStart_toStartOf="parent" />
 
+    <Button
+        android:id="@+id/sharebutton"
+        android:layout_width="92dp"
+        android:layout_height="40dp"
+        android:backgroundTint="#990066CC"
+        android:text="@string/shareButton"
+        android:textColor="#FFFFFF"
+        app:layout_constraintEnd_toEndOf="@+id/titleTxt"
+        app:layout_constraintStart_toStartOf="@+id/titleTxt"
+        app:layout_constraintTop_toBottomOf="@+id/gameStatusTxt" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>

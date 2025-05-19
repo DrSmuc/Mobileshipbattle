@@ -1,5 +1,7 @@
 package com.example.mobileshipbattle
 
+import android.content.Context
+import android.content.Intent
 import android.graphics.Color
 import android.os.Bundle
 import android.os.Handler
@@ -104,6 +106,10 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
         super.onCreate(savedInstanceState)
         binding = ActivityGameBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        binding.sharebutton.setOnClickListener {
+            shareRoomId(this, gameModel!!.gameId)
+        }
 
         p_board = Array(ROWS) { IntArray(COLUMNS) { 0 } }
         r_board = Array(ROWS) { IntArray(COLUMNS) { 0 } }
@@ -461,16 +467,32 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
         gameModel!!.guestFieldPos = r_board!!.flatMap { it.toList() }.map { it.toString() }.toMutableList()
     }
 
+    private fun shareRoomId(context: Context, gameId: String) {
+        val shareIntent = Intent(Intent.ACTION_SEND).apply {
+            type = "text/plain"
+            putExtra(Intent.EXTRA_SUBJECT, "Join my game room!")
+            putExtra(Intent.EXTRA_TEXT, "Join my game using this Room ID: $gameId")
+        }
+
+        val chooser = Intent.createChooser(shareIntent, "Share Room ID via")
+        if (shareIntent.resolveActivity(context.packageManager) != null) {
+            context.startActivity(chooser)
+        } else {
+            Toast.makeText(context, "No app available to share", Toast.LENGTH_SHORT).show()
+        }
+    }
 
 
     fun setUI() {
         gameModel?.apply {
             binding.startGameBtn.visibility = View.VISIBLE
             binding.resetSetupBtn.visibility = View.VISIBLE
+            binding.sharebutton.visibility = View.INVISIBLE
             binding.gameStatusTxt.text = when(gameStatus) {
                 GameStatus.CREATED -> {
                     binding.startGameBtn.visibility = View.INVISIBLE
                     binding.resetSetupBtn.visibility = View.INVISIBLE
+                    binding.sharebutton.visibility = View.VISIBLE
                     "Game ID: " + gameId
                 }
                 GameStatus.JOINED -> {
@@ -491,6 +513,7 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
                 GameStatus.INPROGRESS -> {
                     binding.startGameBtn.visibility = View.INVISIBLE
                     binding.resetSetupBtn.visibility = View.INVISIBLE
+                    binding.sharebutton.visibility = View.INVISIBLE
 
                     when(GameData.myID) {
                         currPlayer -> "Your turn"
@@ -500,6 +523,7 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
                 GameStatus.FINISHED -> {
                     binding.startGameBtn.visibility = View.INVISIBLE
                     binding.resetSetupBtn.visibility = View.INVISIBLE
+                    binding.sharebutton.visibility = View.INVISIBLE
 
                     if (winner.isNotEmpty()) {
                         if (winner == GameData.myID) {

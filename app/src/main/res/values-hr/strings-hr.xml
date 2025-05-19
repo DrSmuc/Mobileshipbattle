@@ -25,5 +25,6 @@
     //u game activity
     <string name="gamenostart">Igrica nije počela</string>
     <string name="resetfleet">Resetiraj brodove</string>
+    <string name="shareButton">Podijeli ID</string>
 
 </resources>

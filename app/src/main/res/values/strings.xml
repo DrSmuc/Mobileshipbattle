@@ -24,6 +24,7 @@
     //u game activity
     <string name="gamenostart">Game not started</string>
     <string name="resetfleet">Reset fleet</string>
+    <string name="shareButton">Share ID</string>
 
 
 </resources>
