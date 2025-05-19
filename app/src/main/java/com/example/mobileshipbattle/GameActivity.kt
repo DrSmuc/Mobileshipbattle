@@ -1300,14 +1300,20 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
                     Toast.makeText(this@GameActivity,
                         if (model.currPlayer == GameData.myID) "Your turn" else "${model.currPlayer}'s turn",
                         Toast.LENGTH_SHORT).show()
-                    if (model.currPlayer == GameData.myID)
-                        allowed = true
                 }
 
                 if (model.gameStatus == GameStatus.INPROGRESS) {
                     p_board = convertFieldPosTo2DArray(model.hostFieldPos)
                     r_board = convertFieldPosTo2DArray(model.guestFieldPos)
                     updateUIForCurrentPlayer()
+
+                    if (model.currPlayer == GameData.myID) {
+                        handler.postDelayed({
+                            allowed = true
+                        }, 1500)
+                    } else {
+                        allowed = false
+                    }
                 }
             }
 
@@ -1395,9 +1401,9 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
                             Toast.makeText(this@GameActivity, "You hit a ship! Shoot again.", Toast.LENGTH_SHORT).show()
 
                             // Re-enable interaction
-                            allowed = true
+                            // allowed = true
                         }
-                    }, 1500)
+                    }, 0)
                 }
             }
         } else {
@@ -1454,7 +1460,7 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
 
                             allowed = true
                         }
-                    }, 1500)
+                    }, 0)
                 }
             }
         }
@@ -1545,7 +1551,7 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
             if (GameData.myID == "Host") {
                 if (gameModel?.currPlayer == "Host") {
                     showGuestGrid()
-                    allowed = true
+                    // allowed = true
                 } else {
                     showHostGrid()
                     allowed = false
@@ -1554,7 +1560,7 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
                 // Guest player
                 if (gameModel?.currPlayer == "Guest") {
                     showHostGridHidden()
-                    allowed = true
+                    // allowed = true
                 } else {
                     showGuestGridVisible()
                     allowed = false
