@@ -120,4 +120,16 @@
         app:layout_constraintStart_toStartOf="@+id/titleTxt"
         app:layout_constraintTop_toBottomOf="@+id/gameStatusTxt" />
 
+    <Button
+        android:id="@+id/exitButton"
+        android:layout_width="133dp"
+        android:layout_height="48dp"
+        android:layout_marginBottom="32dp"
+        android:text="Exit"
+        android:backgroundTint="#990066CC"
+        android:textColor="#FFFFFF"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>

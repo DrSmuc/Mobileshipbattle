@@ -126,6 +126,10 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
             resetSetup()
         }
 
+        binding.exitButton.setOnClickListener {
+            finish()
+        }
+
         GameData.gameModel.observe(this) {
             gameModel = it
             setUI()
@@ -303,6 +307,7 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
 
         binding.startGameBtn.visibility = View.VISIBLE
         binding.resetSetupBtn.visibility = View.VISIBLE
+        binding.exitButton.visibility = View.INVISIBLE
     }
 
 
@@ -539,12 +544,16 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
                 }
             }
         }
+
+        if (gameModel!!.gameId != "-1") {
+            binding.resetSetupBtn.visibility = View.INVISIBLE
+        }
     }
 
 
     fun StartGame() {
         if (numberOfShipsPlaced < 5) {
-            Toast.makeText(this@GameActivity, "Please place all your ships first!", Toast.LENGTH_LONG).show()
+            Toast.makeText(this@GameActivity, "Place all your ships first!", Toast.LENGTH_LONG).show()
             return
         }
 
@@ -568,12 +577,9 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
 
                 if (GameData.myID == "Host") {
                     hostFieldPos = p_board!!.flatMap { it.toList() }.map { it.toString() }.toMutableList()
-                    Toast.makeText(this@GameActivity, "" + p_board!![0][0], Toast.LENGTH_SHORT).show()
                 } else {
                     guestFieldPos = r_board!!.flatMap { it.toList() }.map { it.toString() }.toMutableList()
                 }
-
-                Toast.makeText(this@GameActivity, "" + hostFieldPos[0], Toast.LENGTH_SHORT).show()
 
                 UpdateGameData(this)
 
@@ -589,16 +595,15 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
 
                     if (hostReady && guestReady && false) {
                         gameStatus = GameStatus.INPROGRESS
-                        Toast.makeText(this@GameActivity, "Game starting! Both players are ready.", Toast.LENGTH_SHORT).show()
                         UpdateGameData(this)
                         opennedGame()
                     } else {
-                        Toast.makeText(this@GameActivity, "Waiting for other player to start the game...", Toast.LENGTH_SHORT).show()
+
                     }
 
                     binding.startGameBtn.visibility = View.INVISIBLE
                     binding.resetSetupBtn.visibility = View.INVISIBLE
-                }, 1000)
+                }, 0)
             }
         }
     }
@@ -648,24 +653,21 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
                 placingShip = true
                 val options = arrayOf("2", "3", "4")
                 val builder = android.app.AlertDialog.Builder(this)
-                builder.setTitle("Odaberi duÅ¾inu broda")
+                builder.setTitle("Select ship length")
                 builder.setItems(options) { dialog, which ->
                     shipLength = options[which].toInt()
 
                     if (shipLength == 3 && shipsOfLength3Placed >= 2) {
-                        Toast.makeText(this, "VeÄ‡ si postavio maksimalan broj brodova duljine 3 bloka!", Toast.LENGTH_SHORT).show()
                         placingShip = false
                         return@setItems
                     }
 
                     if (shipLength == 4 && shipsOfLength4Placed >= 1) {
-                        Toast.makeText(this, "VeÄ‡ si postavio maksimalan broj brodova duljine 4 bloka!", Toast.LENGTH_SHORT).show()
                         placingShip = false
                         return@setItems
                     }
 
                     if (shipLength == 2 && shipsOfLength2Placed >= 2) {
-                        Toast.makeText(this, "VeÄ‡ si postavio maksimalan broj brodova duljine 2 bloka!", Toast.LENGTH_SHORT).show()
                         placingShip = false
                         return@setItems
                     }
@@ -677,9 +679,9 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
                     }
 
                     numberOfShipsPlaced++
-                    val orientationOptions = arrayOf("Horizontalno", "Vertikalno")
+                    val orientationOptions = arrayOf("Horizontal", "Vertikal")
                     val orientationDialog = android.app.AlertDialog.Builder(this)
-                    orientationDialog.setTitle("Odaberi smjer broda")
+                    orientationDialog.setTitle("Select orientation")
                     orientationDialog.setItems(orientationOptions) { _, orientationWhich ->
                         val isHorizontal = (orientationWhich == 0)
 
@@ -690,7 +692,6 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
                                 ready_f()
                             }
                         } else {
-                            Toast.makeText(this, "NemoguÄ‡e postaviti brod! Izvan granica ili mjesto je veÄ‡ zauzeto.", Toast.LENGTH_SHORT).show()
                             placingShip = false
                             numberOfShipsPlaced--
                             when (shipLength) {
@@ -722,7 +723,7 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
 
                 builder.show()
             } else {
-                Toast.makeText(this, "NemoguÄ‡e postaviti viÅ¡e brodova!", Toast.LENGTH_SHORT).show()
+
             }
         }
     }
@@ -851,11 +852,6 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
                         in 2..7 -> handleHit(row, column, cellValue)
                         1, in 12..17, -1 -> {
                             allowed = true
-                            Toast.makeText(
-                                this@GameActivity,
-                                "VeÄ‡ pucano ovdje",
-                                Toast.LENGTH_SHORT
-                            ).show()
                         }
                     }
                 } else {
@@ -866,11 +862,6 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
                             in 2..7 -> handleOnlineHit(row, column, cellValue)
                             1, in 12..17, -1 -> {
                                 allowed = true
-                                Toast.makeText(
-                                    this@GameActivity,
-                                    "Already fired here",
-                                    Toast.LENGTH_SHORT
-                                ).show()
                             }
                         }
                     } else {
@@ -880,11 +871,6 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
                             in 2..7 -> handleOnlineHit(row, column, cellValue)
                             1, in 12..17, -1 -> {
                                 allowed = true
-                                Toast.makeText(
-                                    this@GameActivity,
-                                    "Already fired here",
-                                    Toast.LENGTH_SHORT
-                                ).show()
                             }
                         }
                     }
@@ -1144,7 +1130,6 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
 
                 if (shipsRemaining_p == 0) {
                     endgame = 2
-                    Toast.makeText(this@GameActivity, "You lost! All your ships are sunk.", Toast.LENGTH_LONG).show()
                 }
 
                 handler.postDelayed({
@@ -1320,10 +1305,6 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
 
                 if (previousTurn != model.currPlayer && model.gameStatus == GameStatus.INPROGRESS) {
                     updateUIForCurrentPlayer()
-
-                    Toast.makeText(this@GameActivity,
-                        if (model.currPlayer == GameData.myID) "Your turn" else "${model.currPlayer}'s turn",
-                        Toast.LENGTH_SHORT).show()
                 }
 
                 if (model.gameStatus == GameStatus.INPROGRESS) {
@@ -1422,7 +1403,6 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
                             showGameOver(winner == GameData.myID)
                         } else {
                             showGuestGrid()
-                            Toast.makeText(this@GameActivity, "You hit a ship! Shoot again.", Toast.LENGTH_SHORT).show()
 
                             // Re-enable interaction
                             // allowed = true
@@ -1480,7 +1460,6 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
                         } else {
                             showHostGridHidden()
                             binding.gameStatusTxt.text = "Your turn!"
-                            Toast.makeText(this@GameActivity, "You hit a ship! Shoot again.", Toast.LENGTH_SHORT).show()
 
                             allowed = true
                         }
@@ -1509,7 +1488,6 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
 
                         showHostGrid()
                         binding.gameStatusTxt.text = "Guest's turn"
-                        Toast.makeText(this@GameActivity, "You missed! Guest's turn now.", Toast.LENGTH_SHORT).show()
                         allowed = false
                     }, 1500)
                 }
@@ -1530,7 +1508,6 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
 
                         showGuestGridVisible()
                         binding.gameStatusTxt.text = "Host's turn"
-                        Toast.makeText(this@GameActivity, "You missed! Host's turn now.", Toast.LENGTH_SHORT).show()
                         allowed = false
                     }, 1500)
                 }
@@ -1626,37 +1603,14 @@ class GameActivity : AppCompatActivity(), View.OnClickListener {
     // ------------------------------------------ endgame logic ---------------------------------------------------
 
     private fun showGameOver(win: Boolean) {
-        val inflater = LayoutInflater.from(this)
-        val popupView = inflater.inflate(R.layout.game_over_popup, null)
-
-        val width = LinearLayout.LayoutParams.MATCH_PARENT
-        val height = LinearLayout.LayoutParams.MATCH_PARENT
-        val focusable = true
-        val popupWindow = PopupWindow(popupView, width, height, focusable)
-
-        val resultText = popupView.findViewById<TextView>(R.id.gameResultText)
-        if (win) {
-            resultText.text = "VICTORY"
-            resultText.setTextColor(Color.parseColor("#4CAF50")) // Green
+        binding.gameStatusTxt.text = if (win) "VICTORY" else "DEFEAT"
+        if (GameData.myID == "Host") {
+            showGuestGridVisible()
         } else {
-            resultText.text = "DEFEAT"
-            resultText.setTextColor(Color.parseColor("#F44336")) // Red
+            showHostGridHidden()
         }
 
-        val boardContainer = popupView.findViewById<FrameLayout>(R.id.opponentBoardContainer)
-        createOpponentFinalBoard(boardContainer)
-
-        popupView.findViewById<Button>(R.id.rematchButton).setOnClickListener {
-            popupWindow.dismiss()
-            resetGame()
-        }
-
-        popupView.findViewById<Button>(R.id.exitButton).setOnClickListener {
-            popupWindow.dismiss()
-            finish()
-        }
-
-        popupWindow.showAtLocation(binding.root, Gravity.CENTER, 0, 0)
+        binding.exitButton.visibility = View.VISIBLE
     }
 
     private fun createOpponentFinalBoard(container: FrameLayout) {
